@@ -2,123 +2,122 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <title>ESP8266 Firebase Control</title>
+  <title>ESP8266 Firebase Monitor</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <!-- Firebase v9 -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+    // 🔧 Firebase Config
+    const firebaseConfig = {
+      apiKey: "L08PB9igrcnmAoLsCnNy3Wp0StqA6dujeproIFkV",
+      authDomain: "project-7a563.firebaseapp.com",
+      databaseURL: "https://project-7a563-default-rtdb.firebaseio.com",
+      projectId: "project-7a563",
+      storageBucket: "project-7a563.appspot.com",
+      messagingSenderId: "XXXXXXXX",
+      appId: "XXXXXXXX"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const sensorRef = ref(db, "sensor");
+
+    onValue(sensorRef, (snapshot) => {
+      const data = snapshot.val();
+      if (!data) return;
+
+      document.getElementById("temp").innerText =
+        data.temperature ?? "--";
+
+      document.getElementById("distance").innerText =
+        data.distance ?? "--";
+
+      document.getElementById("soil").innerText =
+        data.soil ?? "--";
+
+      const alarmEl = document.getElementById("alarm");
+      if (data.alarm) {
+        alarmEl.innerText = "🚨 ALERT";
+        alarmEl.className = "alarm on";
+      } else {
+        alarmEl.innerText = "✅ NORMAL";
+        alarmEl.className = "alarm off";
+      }
+    });
+  </script>
 
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f2f2f2;
-      margin: 0;
-      padding: 20px;
+      background: #0f172a;
+      color: #e5e7eb;
       text-align: center;
+      padding: 20px;
     }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
     .card {
-      background: white;
+      background: #1e293b;
+      border-radius: 12px;
       padding: 20px;
       margin: 10px auto;
-      max-width: 350px;
-      border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      max-width: 320px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.4);
     }
-    h2 {
-      margin-top: 0;
-    }
+
     .value {
-      font-size: 28px;
+      font-size: 2rem;
+      margin-top: 5px;
+    }
+
+    .alarm {
+      font-size: 1.8rem;
       font-weight: bold;
-      color: #2196F3;
+      padding: 10px;
+      border-radius: 10px;
     }
-    button {
-      width: 120px;
-      padding: 12px;
-      font-size: 16px;
-      margin: 10px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    .on {
-      background: #4CAF50;
+
+    .alarm.on {
+      background: #b91c1c;
       color: white;
     }
-    .off {
-      background: #f44336;
+
+    .alarm.off {
+      background: #15803d;
       color: white;
     }
   </style>
 </head>
 
 <body>
-
   <h1>📡 ESP8266 Monitor</h1>
 
-  <!-- ===== SENSOR DISPLAY ===== -->
   <div class="card">
-    <h2>Distance</h2>
-    <div class="value"><span id="distance">--</span> cm</div>
-  </div>
-
-  <div class="card">
-    <h2>Temperature</h2>
+    🌡 Temperature
     <div class="value"><span id="temp">--</span> °C</div>
   </div>
 
   <div class="card">
-    <h2>Soil Moisture</h2>
+    📏 Distance
+    <div class="value"><span id="distance">--</span> cm</div>
+  </div>
+
+  <div class="card">
+    🌱 Soil Moisture
     <div class="value"><span id="soil">--</span> %</div>
   </div>
 
-  <!-- ===== CONTROL ===== -->
   <div class="card">
-    <h2>Alarm Control</h2>
-    <button class="on" onclick="setAlarm(true)">ON</button>
-    <button class="off" onclick="setAlarm(false)">OFF</button>
-    <p>Status: <b><span id="alarmStatus">--</span></b></p>
+    🔔 Alarm Status
+    <div id="alarm" class="alarm off">--</div>
   </div>
-
-  <script>
-    // 🔥 แก้ตรงนี้ให้ตรง Firebase ของคุณ
-    const firebaseConfig = {
-      apiKey: "AIzaSyDxboOosGlNKBxNPAcGijh5BKmCPM8euIU",
-      authDomain: "project-8650828815431597520.firebaseapp.com",
-      databaseURL: "https://project-8650828815431597520-default-rtdb.firebaseio.com",
-      projectId: "project-8650828815431597520",
-      storageBucket: "project-8650828815431597520.firebasestorage.app",
-      messagingSenderId: "112208691872",
-      appId: "1:112208691872:web:92f533dcad0dd755663fc5"
-    };
-
-    // Init Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    // ===== READ SENSOR =====
-    db.ref("sensor").on("value", snapshot => {
-      const s = snapshot.val();
-      if (!s) return;
-
-      document.getElementById("distance").innerText = s.distance;
-      document.getElementById("temp").innerText = s.temperature;
-      document.getElementById("soil").innerText = s.soil;
-    });
-
-    // ===== READ ALARM STATUS =====
-    db.ref("alarm/enable").on("value", snapshot => {
-      const state = snapshot.val();
-      document.getElementById("alarmStatus").innerText =
-        state ? "ON" : "OFF";
-    });
-
-    // ===== WRITE ALARM =====
-    function setAlarm(state) {
-      db.ref("alarm/enable").set(state);
-    }
-  </script>
 
 </body>
 </html>
